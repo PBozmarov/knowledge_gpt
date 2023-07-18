@@ -29,7 +29,6 @@ MODEL = "openai"
 st.set_page_config(page_title="KnowledgeGPT", page_icon="📖", layout="wide")
 st.header("📖KnowledgeGPT")
 
-# Initialising submit as False
 if "submit" not in st.session_state:
     st.session_state["submit"] = False
 
@@ -38,7 +37,7 @@ bootstrap_caching()
 
 sidebar()
 
-openai_api_key = st.secrets.get("OPENAI_API_KEY")
+openai_api_key = st.session_state.get("OPENAI_API_KEY")
 email = st.secrets.get("TRUBRICS_EMAIL")
 password = st.secrets.get("TRUBRICS_PASSWORD")
 
@@ -85,9 +84,8 @@ with st.form(key="qa_form"):
     query = st.text_area("Ask a question about the document")
     submit = st.form_submit_button("Submit")
 
-    # Setting submit to True if the button is pressed
     if submit:
-        st.session_state['submit'] = True
+        st.session_state["submit"] = True
 
 
 with st.expander("Advanced Options"):
@@ -100,44 +98,39 @@ if show_full_doc:
         # Hack to get around st.markdown rendering LaTeX
         st.markdown(f"<p>{wrap_doc_in_html(file.docs)}</p>", unsafe_allow_html=True)
 
-# this code runs after the form
-if st.session_state['submit']:
 
+if st.session_state["submit"]:
     if not is_query_valid(query):
         st.stop()
 
     # Output Columns
     answer_col, sources_col = st.columns(2)
-
     result = query_folder(
-            folder_index=folder_index,
-            query=query,
-            return_all=return_all_chunks,
-            model=MODEL,
-            openai_api_key=openai_api_key,
-            temperature=0,
-        )
+        folder_index=folder_index,
+        query=query,
+        return_all=return_all_chunks,
+        model=MODEL,
+        openai_api_key=openai_api_key,
+        temperature=0,
+    )
 
     with answer_col:
         st.markdown("#### Answer")
         st.markdown(result.answer)
 
-        # Object to collect feedback
         collector = FeedbackCollector(
             component_name="default",
-            email=email, 
-            password=password, 
+            email=email,
+            password=password,
         )
-        
-        # Collecting the feedback for result
+
         feedback_result = collector.st_feedback(
-                feedback_type="thumbs",
-                model=MODEL,
-                open_feedback_label="[Optional] Provide additional feedback",
-                key = 'key_result',
-                metadata={"response": result.answer, "prompt": query}
-            )
-    
+            feedback_type="thumbs",
+            model=MODEL,
+            open_feedback_label="[Optional] Provide additional feedback",
+            key="key_result",
+            metadata={"response": result.answer, "prompt": query},
+        )
 
     with sources_col:
         st.markdown("#### Sources")
@@ -146,12 +139,10 @@ if st.session_state['submit']:
             st.markdown(source.metadata["source"])
             st.markdown("---")
 
-        # Collecting the feedback for source
         feedback_source = collector.st_feedback(
-                feedback_type="thumbs",
-                model=MODEL,
-                open_feedback_label="[Optional] Provide additional feedback",
-                key = 'key_source',
-                metadata={"response": source.metadata["source"], "prompt": query}
-            )
-    
+            feedback_type="thumbs",
+            model=MODEL,
+            open_feedback_label="[Optional] Provide additional feedback",
+            key="key_source",
+            metadata={"response": source.metadata["source"], "prompt": query},
+        )
