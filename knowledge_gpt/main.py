@@ -146,7 +146,7 @@ if st.session_state['submit']:
             st.markdown(source.metadata["source"])
             st.markdown("---")
 
-                # Collecting the feedback for result
+        # Collecting the feedback for source
         feedback_source = collector.st_feedback(
                 feedback_type="thumbs",
                 model=MODEL,
